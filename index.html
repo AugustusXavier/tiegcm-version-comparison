@@ -63,6 +63,7 @@ p{ margin:0; }
 .seg{ display:inline-flex; flex-wrap:wrap; gap:6px; min-width:0; max-width:100%; }
 .seg button{ font:400 13.5px/1 var(--font-ui); padding:7px 11px; border:1px solid var(--line); border-radius:4px; background:var(--surface); color:var(--ink-2); cursor:pointer; white-space:nowrap; }
 .seg button:hover{ background:var(--accent-soft); }
+.seg button:disabled{ opacity:.4; cursor:default; background:var(--surface); }
 .seg button[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
 .sel{
   font:400 13.5px/1.2 var(--font-ui); color:var(--ink); background-color:var(--surface);
@@ -173,6 +174,7 @@ canvas{ display:block; max-width:100%; }
       <label class="tog"><input type="checkbox" id="optHatch" checked> Hatch where values are missing</label>
     </div>
   </div>
+  <p id="field2dNote" hidden style="margin:12px 0 0;font-size:13.5px;line-height:1.45">hmF2 and NmF2 are the height and the electron density of the largest Ne in each model column, over the whole column, on the model’s own levels without interpolation, computed member by member. Where the F layer is weak the largest Ne can sit in the lower ionosphere, so hmF2 can jump by a few hundred km. The hmF2 difference is in km; the NmF2 difference is in % of the reference. They have no height, so the height buttons do not apply.</p>
 
   <section class="view" id="vA" data-view="A">
     <div class="vhead">
@@ -243,6 +245,7 @@ canvas{ display:block; max-width:100%; }
     </div>
     <div class="fig" style="padding:6px">
       <div class="plot3d" id="plot3d"></div>
+      <p class="msg" id="plot3dNote" hidden>hmF2 and NmF2 have one value per column, so there is nothing to stack by height here. Choose temperature, density or electron density for this view.</p>
       <p class="msg" id="plot3dMsg" hidden>The 3D library did not load (it needs access to cdn.jsdelivr.net); the other figures are not affected.</p>
     </div>
   </section>
@@ -268,14 +271,15 @@ var D2R=Math.PI/180, TAU=Math.PI*2;
 function $(id){ return document.getElementById(id); }
 
 /* ---------------- labels ---------------- */
-var PAIR_ORDER=['B-Ap','C-B','D-C','D-Ap','D-E','D-F','F-E','I1-Ap','I2-Ap','I3-Ap','G1-D','G2-D','G3-D','H-Ap'];
+var PAIR_ORDER=['B-Ap','C-B','D-C','D-Ap','D-E','D-F','F-E','I1-Ap','I2-Ap','I3-Ap','G1-D','G2-D','G3-D','H-Ap','N-D','N1-D','N-N1','N1-Ap'];
 var CFG={A:'2.0 (Nick’s executable)',Ap:'2.0 rebuilt',B:'2.9',C:'3.0.1, electron heating option 4',D:'3.0.1',E:'3.0',F:'3.0.1, ENFORCE_N2 on',
   G1:'3.0.1, cp by mass mixing ratio',G2:'3.0.1, O 63 µm cooling coefficient ×2',G3:'3.0.1, qrj 5% term removed',H:'2.0, helium in mean molecular mass',
-  I1:'2.0 + Joule heating w fix',I2:'2.0 + elam3d fix',I3:'2.0 + filter fix'};
+  I1:'2.0 + Joule heating w fix',I2:'2.0 + elam3d fix',I3:'2.0 + filter fix',N:'3.0.1 + NCAR settings',N1:'3.0.1 + DUFF'};
 var PAIR_SUB={'B-Ap':'2.9 − 2.0','C-B':'3.0.1 (heating 4) − 2.9','D-C':'heating option 6 − 4','D-Ap':'3.0.1 − 2.0',
   'D-E':'3.0.1 − 3.0','D-F':'3.0.1, ENFORCE_N2 off − on','F-E':'3.0.1 with ENFORCE_N2 on − 3.0',
   'I1-Ap':'2.0 + Joule heating w fix','I2-Ap':'2.0 + elam3d fix','I3-Ap':'2.0 + filter fix',
-  'G1-D':'cp by mass mixing ratio','G2-D':'O 63 µm coefficient ×2','G3-D':'qrj 5% term removed','H-Ap':'2.0, helium in mean molecular mass'};
+  'G1-D':'cp by mass mixing ratio','G2-D':'O 63 µm coefficient ×2','G3-D':'qrj 5% term removed','H-Ap':'2.0, helium in mean molecular mass',
+  'N-D':'full NCAR settings − 3.0.1','N1-D':'DUFF on − off','N-N1':'full NCAR settings − DUFF only','N1-Ap':'3.0.1 + DUFF − 2.0'};
 var GROUPS=[
   {id:'decomp',name:'Total and its parts',pairs:['B-Ap','C-B','D-C','D-Ap'],eq:'B−A′ + C−B + D−C = D−A′',
    note:'The first three add up to the last. Temperature (K) adds exactly; density and electron density are percentages of each reference, so the parts add up to the total only approximately.'},
@@ -284,11 +288,16 @@ var GROUPS=[
   {id:'fix2',name:'Fixes on 2.0, one at a time',pairs:['I1-Ap','I2-Ap','I3-Ap','B-Ap'],eq:'',
    note:'I1, I2, I3 each add one fix to 2.0; B−A′ is all the changes in 2.9.'},
   {id:'issues',name:'Code issues',pairs:['G1-D','G2-D','G3-D','H-Ap'],eq:'',
-   note:'G1, G2, G3 each change one thing in 3.0.1; H changes one thing in 2.0.'}];
-var MAPF_CN={TN:'temperature',DEN:'density',NE:'electron density'};
+   note:'G1, G2, G3 each change one thing in 3.0.1; H changes one thing in 2.0.'},
+  {id:'ncar',name:'NCAR settings',pairs:['N-D','N1-D','N-N1','N1-Ap'],eq:'N−D = (N−N1) + (N1−D)',
+   note:'N is 3.0.1 with the full NCAR recommended settings; N1 is 3.0.1 with only DUFF turned on. Temperature and hmF2 add exactly; percentages only approximately.'}];
+var MAPF_CN={TN:'temperature',DEN:'density',NE:'electron density',hmF2:'hmF2',NmF2:'NmF2'};
 var FIELD_CN={TN:'TN neutral temperature',DEN:'DEN neutral mass density',NE:'NE electron density',UN:'UN zonal wind (eastward positive)',VN:'VN meridional wind (northward positive)',
-  O2:'O2',O1:'O1',N2:'N2',OP:'OP (O⁺)',HE:'HE',NO:'NO',NO_COOL:'NO_COOL',O_N2:'O_N2'};
-function unitOf(f){ return f==='TN'?'K':((f==='UN'||f==='VN')?'m/s':'%'); }
+  O2:'O2',O1:'O1',N2:'N2',OP:'OP (O⁺)',HE:'HE',NO:'NO',NO_COOL:'NO_COOL',O_N2:'O_N2',hmF2:'hmF2 F-layer peak height',NmF2:'NmF2 F-layer peak electron density'};
+function unitOf(f){ return f==='TN'?'K':((f==='UN'||f==='VN')?'m/s':(f==='hmF2'?'km':'%')); }
+function is2D(f){ return f==='hmF2'||f==='NmF2'; }
+function hkOf(f,km){ return is2D(f)?0:KMS.indexOf(km); }
+function kmTag(f,km){ return is2D(f)?'':km+' km · '; }
 function cfgShort(c){ return c==='Ap'?'A′':c; }
 
 /* ---------------- index, axes, time ---------------- */
@@ -376,7 +385,7 @@ function readTokens(){
 function cidx(v,lim){ var u=(v/lim+1)/2; if(u<0) u=0; else if(u>1) u=1; return Math.round(u*255); }
 function niceUp(x){ if(!(x>0)) return 1; var e=Math.pow(10,Math.floor(Math.log10(x))), f=x/e, st=[1,1.2,1.5,2,2.5,3,4,5,6,8,10];
   for(var k=0;k<st.length;k++){ if(f<=st[k]+1e-9) return st[k]*e; } return 10*e; }
-function mapLim(pair,field,km){ var st=(IDX.map_stats[field+'_'+km]||{})[pair]; return niceUp(st && st.p99>0 ? st.p99 : 1); }
+function mapLim(pair,field,km){ var st=(IDX.map_stats[is2D(field)?field:field+'_'+km]||{})[pair]; return niceUp(st && st.p99>0 ? st.p99 : 1); }
 var MONO="'Source Sans 3', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif", UI=MONO;
 function fmt(v,lim){ var d=lim>=20?0:(lim>=2?1:2); var s=v.toFixed(d); if(v>0) s='+'+s; if(/^-0(\.0+)?$/.test(s)) s=s.slice(1); return s; }
 function fmtU(v,lim,unit){ return fmt(v,lim)+(unit==='%'?'%':' '+unit); }
@@ -446,7 +455,7 @@ function drawMap(ctx,x,y,w,h,M,hk,f,lim,o){
 }
 function cellText(M,hk,f,i,j,km,unit,lim){
   var k=f*N+i*NLT+j, c=M.codes[hk][k];
-  if(c===255) return 'At least one member has no value at '+km+' km';
+  if(c===255) return 'At least one member has no value here';
   var v=(c-127)*M.s[hk], dec=Math.max(0,Math.min(3,Math.ceil(-Math.log10(M.s[hk]/2)))), s=(v>0?'+':'')+v.toFixed(dec)+(unit==='%'?'%':' '+unit);
   if(/^-0(\.0+)?/.test(s) && Math.abs(v)<Math.pow(10,-dec)/2) s=s.slice(1);
   if(c===0) s='≤ '+s+' (outside the encoding range)'; else if(c===254) s='≥ '+s+' (outside the encoding range)';
@@ -505,8 +514,8 @@ function pairLabel(pair){ var xy=pairXY(pair); return cfgShort(xy[0])+' − '+cf
 function renderA(){
   var W=figA.clientWidth-24, mL=44, mR=74, mB=40, pw=W-mL-mR, ph=Math.min(440,Math.max(150,pw/2)), TF='500 13px '+UI;
   pw=Math.min(pw,ph*2);
-  var p=state.pair, fld=state.field, km=state.km, hk=KMS.indexOf(km), unit=unitOf(fld);
-  var tl=IDX? splitTitle([titleLine(p), km+' km · '+MAPF_CN[fld]+' difference · '+frameLabel(state.f)],' · ',TF,Math.max(120,W-mL-8),[titleLine(p), km+' km · '+MAPF_CN[fld]+' difference · 7/8 23:00 UT · end of spin-up']) : [''];
+  var p=state.pair, fld=state.field, km=state.km, hk=hkOf(fld,km), unit=unitOf(fld);
+  var tl=IDX? splitTitle([titleLine(p), kmTag(fld,km)+MAPF_CN[fld]+' difference · '+frameLabel(state.f)],' · ',TF,Math.max(120,W-mL-8),[titleLine(p), km+' km · '+MAPF_CN[fld]+' difference · 7/8 23:00 UT · end of spin-up']) : [''];
   var mT=tl.length>1?46:30, H=ph+mT+mB, ctx=fit(cA,W,H);
   var shift=Math.max(0,Math.floor((W-(mL+pw+mR))/2)); ctx.translate(shift,0); rectA=null;
   if(!IDX) return;
@@ -529,7 +538,7 @@ cA.addEventListener('mousemove',function(e){ if(!rectA){ tipA.hidden=true; retur
   var j=Math.min(NLT-1,Math.floor(x/rectA.w*NLT)), i=NLAT-1-Math.min(NLAT-1,Math.floor(y/rectA.h*NLAT));
   var L=LT[j], hh=Math.floor(L+1e-6), mm=Math.round((L-hh)*60)%60, lon=wrapLon(15*(L-UTH[state.f]));
   showTip(tipA,figA,e,['Lat '+LAT[i].toFixed(2)+'° · LT '+pad2(hh)+':'+pad2(mm)+' · Lon '+lonText(lon),
-    cellText(M,KMS.indexOf(state.km),state.f,i,j,state.km,unitOf(state.field),mapLim(state.pair,state.field,state.km))]); });
+    cellText(M,hkOf(state.field,state.km),state.f,i,j,state.km,unitOf(state.field),mapLim(state.pair,state.field,state.km))]); });
 cA.addEventListener('mouseleave',function(){ tipA.hidden=true; });
 
 /* ---------------- view B: globe ---------------- */
@@ -545,7 +554,7 @@ function renderB(){
   var figW=cB.parentNode.clientWidth-24, size=Math.max(200,Math.min(460, figW>620? figW-260 : figW));
   var ctx=fit(cB,size,size), cx=size/2, cy=size/2, R=size/2-6;
   if(!IDX) return;
-  var p=state.pair, fld=state.field, km=state.km, hk=KMS.indexOf(km), f=state.f, unit=unitOf(fld), sLon=subsolarLon(f), DEC=declination(DOYS[f],UTH[f]);
+  var p=state.pair, fld=state.field, km=state.km, hk=hkOf(fld,km), f=state.f, unit=unitOf(fld), sLon=subsolarLon(f), DEC=declination(DOYS[f],UTH[f]);
   var M=mapsFor(p,fld), m=stateMsg(M,MAPF_CN[fld]+' map');
   gInfo.innerHTML='';
   if(m){ text(ctx,m,cx,cy,{align:'center',base:'middle',font:'13px '+UI,color:TOK.ink2}); return; }
@@ -578,7 +587,7 @@ function renderB(){
   var Ms=proj(-80.7,107.3); if(Ms[2]){ var X3=cx+Ms[0]*R, Y3=cy-Ms[1]*R; ctx.strokeStyle=TOK.ink; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(X3-5,Y3); ctx.lineTo(X3+5,Y3); ctx.moveTo(X3,Y3-5); ctx.lineTo(X3,Y3+5); ctx.stroke(); text(ctx,'S magnetic pole',X3+8,Y3+4,{font:'11px '+UI,color:TOK.ink}); }
   ctx.strokeStyle=TOK.axis; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(cx,cy,R,0,TAU); ctx.stroke();
   var bctx=fit(cBbar,150,220); drawBar(bctx,8,22,14,190,lim,unit);
-  var lines=[pairLabel(p)+' · '+km+' km · '+MAPF_CN[fld]+' difference', 'Time '+frameLabel(f), 'Subsolar point '+DEC.toFixed(1)+'°N, '+lonText(sLon)];
+  var lines=[pairLabel(p)+' · '+kmTag(fld,km)+MAPF_CN[fld]+' difference', 'Time '+frameLabel(f), 'Subsolar point '+DEC.toFixed(1)+'°N, '+lonText(sLon)];
   lines.forEach(function(s,n){ if(n) gInfo.appendChild(document.createElement('br')); gInfo.appendChild(document.createTextNode(s)); });
 }
 var gDrag=null;
@@ -715,7 +724,7 @@ function buildCards(){
 }
 function renderD(){
   if(!IDX) return;
-  var fld=state.field, km=state.km, hk=KMS.indexOf(km), unit=unitOf(fld), zi=KMH.indexOf(km), limU=0;
+  var fld=state.field, km=state.km, hk=hkOf(fld,km), unit=unitOf(fld), zi=KMH.indexOf(km), limU=0;
   cardsD.forEach(function(C){ if(C.cm) limU=Math.max(limU,mapLim(C.p,fld,km)); });
   cardsD.forEach(function(C){ if(!C.cm) return; var p=C.p, W=C.card.clientWidth-24, mL=30, mR=48, mT=6, mB=20, pw=W-mL-mR, ph=pw/2;
     var ctx=fit(C.cm,W,ph+mT+mB), lim=state.unified?limU:mapLim(p,fld,km), M=mapsFor(p,fld), m=stateMsg(M,MAPF_CN[fld]+' map');
@@ -723,6 +732,7 @@ function renderD(){
     var H=92, c2=fit(C.ct,W,H), qL=mL, qw=pw, top=20, bot=H-16, Hd=htFor(p), m2=stateMsg(Hd,'global mean');
     if(m2){ text(c2,m2,qL,2,{base:'top',font:'11px '+UI,color:TOK.ink2}); return; }
     var A=htArrays(Hd,fld,'dom'), lo=0, hi=0, f, k, X=function(f){ return qL+(FH[f]+0.5)/97*qw; };
+    if(!A.m){ text(c2,'No global-mean series for '+MAPF_CN[fld],qL,2,{base:'top',font:'11px '+UI,color:TOK.ink2}); return; }
     for(f=0;f<NT;f++){ k=f*NK+zi; if(Hd.ts[f]>=0 && htShown(A,k)){ lo=Math.min(lo,A.lo[k]); hi=Math.max(hi,A.hi[k]); } }
     if(hi-lo<1e-6){ hi+=0.5; lo-=0.5; } var Y=function(v){ return bot-(v-lo)/(hi-lo)*(bot-top); };
     bandsX(c2,qL,top,qw,bot-top,false); veilX(c2,qL,top,qw,bot-top,false);
@@ -795,7 +805,7 @@ if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function()
 /* ---------------- start ---------------- */
 function setupUI(){
   var sel=$('pairSel');
-  [['Total and its parts',['B-Ap','C-B','D-C','D-Ap']],['After 3.0',['D-E','D-F','F-E']],['Fixes on 2.0, one at a time',['I1-Ap','I2-Ap','I3-Ap']],['Code issues',['G1-D','G2-D','G3-D','H-Ap']]].forEach(function(g){
+  [['Total and its parts',['B-Ap','C-B','D-C','D-Ap']],['After 3.0',['D-E','D-F','F-E']],['Fixes on 2.0, one at a time',['I1-Ap','I2-Ap','I3-Ap']],['Code issues',['G1-D','G2-D','G3-D','H-Ap']],['NCAR settings',['N-D','N1-D','N-N1','N1-Ap']]].forEach(function(g){
     var og=document.createElement('optgroup'); og.label=g[0];
     g[1].forEach(function(pid){ var o=document.createElement('option'); o.value=pid; var has=HAS_MAPS.indexOf(pid)>=0;
       o.textContent=pairLabel(pid)+'   '+(PAIR_SUB[pid]||'')+(has?'':' (not exported)'); o.disabled=!has; og.appendChild(o); });
@@ -804,10 +814,12 @@ function setupUI(){
   sel.value=state.pair; sel.addEventListener('change',function(){ state.pair=sel.value; renderAll('pair'); });
   var fs=$('fieldSeg');
   IDX.map_fields.forEach(function(f){ var b=document.createElement('button'); b.type='button'; b.textContent=MAPF_CN[f]||f; b.title=FIELD_CN[f]||f; b.setAttribute('aria-pressed',f===state.field?'true':'false');
-    b.addEventListener('click',function(){ state.field=f; pressOnly(fs,b); if(IDX.ht_fields.indexOf(f)>=0){ state.htField=f; htFieldSel.value=f; } renderAll('field'); }); fs.appendChild(b); });
+    b.addEventListener('click',function(){ state.field=f; pressOnly(fs,b); if(IDX.ht_fields.indexOf(f)>=0){ state.htField=f; htFieldSel.value=f; } syncZ(); renderAll('field'); }); fs.appendChild(b); });
   var zs=$('zSeg');
   KMS.forEach(function(z){ var b=document.createElement('button'); b.type='button'; b.textContent=z+' km'; b.setAttribute('aria-pressed',z===state.km?'true':'false');
     b.addEventListener('click',function(){ state.km=z; pressOnly(zs,b); renderAll('z'); }); zs.appendChild(b); });
+  function syncZ(){ var two=is2D(state.field); Array.prototype.forEach.call(zs.children,function(b){ b.disabled=two; }); $('field2dNote').hidden=!two; }
+  syncZ();
   IDX.ht_fields.forEach(function(f){ var o=document.createElement('option'); o.value=f; o.textContent=FIELD_CN[f]||f; htFieldSel.appendChild(o); });
   htFieldSel.value=state.htField;
   slider.max=String(NT-1); slider.value=String(state.f); tlabel.textContent=frameLabel(state.f);
@@ -857,7 +869,7 @@ start();
 
 window.TIEGCMPage={ state:state, mapsFor:mapsFor, mapLim:mapLim, unitOf:unitOf, pairLabel:pairLabel,
   axes:function(){ return {KMS:KMS,LAT:LAT,LT:LT,NLAT:NLAT,NLT:NLT,N:N,ready:!!IDX}; },
-  tokens:function(){ return TOK; }, isVisible:function(v){ return !!visible[v]; }, subscribe:function(f){ subs.push(f); }, MAPF_CN:MAPF_CN };
+  tokens:function(){ return TOK; }, isVisible:function(v){ return !!visible[v]; }, subscribe:function(f){ subs.push(f); }, MAPF_CN:MAPF_CN, is2D:is2D };
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
@@ -870,7 +882,7 @@ if(!window.Plotly){ el.hidden=true; msg.hidden=false; return; }
 var built=false, pending=false, lastKey='';
 function rgb(c){ return 'rgb('+c[0]+','+c[1]+','+c[2]+')'; }
 function scale(){ var T=D.tokens(); return T.div.map(function(c,i){ return [i/10, rgb(c)]; }); }
-function layers(){ var s=D.state, A=D.axes(), M=D.mapsFor(s.pair,s.field); if(!M || M.error) return null;
+function layers(){ var s=D.state, A=D.axes(), M=D.mapsFor(s.pair,s.field); if(!M || M.error || M.codes.length<A.KMS.length) return null;
   var out=[], base=s.f*A.N, lim=0;
   A.KMS.forEach(function(km,h){ lim=Math.max(lim,D.mapLim(s.pair,s.field,km)); var codes=M.codes[h], sc=M.s[h], zz=[], cc=[];
     for(var i=0;i<A.NLAT;i++){ var zr=[], cr=[]; for(var j=0;j<A.NLT;j++){ var c=codes[base+i*A.NLT+j]; if(c===255){ zr.push(null); cr.push(null); } else { zr.push(km); cr.push((c-127)*sc); } } zz.push(zr); cc.push(cr); }
@@ -891,7 +903,11 @@ function build(){
   Plotly.newPlot(el,traces,layout,{displaylogo:false, responsive:true, displayModeBar:'hover', modeBarButtonsToRemove:['toImage','resetCameraLastSave3d','orbitRotation','tableRotation']});
   built=true; lastKey=s.pair+'|'+s.field+'|'+s.f; return true;
 }
+var noteOn=false;
+function showNote(on){ if(on===noteOn) return; noteOn=on; el.style.display=on?'none':''; document.getElementById('plot3dNote').hidden=!on; if(!on && built){ try{ Plotly.Plots.resize(el); }catch(_){} } }
 function update(reason){
+  if(D.axes().ready && D.is2D(D.state.field)){ showNote(true); lastKey=''; return; }
+  showNote(false);
   if(!built){ if(D.axes().ready && D.isVisible('E')){ try{ build(); }catch(e){ console.error(e); } } return; }
   if(reason==='theme'){ var cam=el.layout&&el.layout.scene&&el.layout.scene.camera; Plotly.purge(el); built=false; if(build() && cam) Plotly.relayout(el,{'scene.camera':cam}); return; }
   if(reason==='resize'){ try{ Plotly.Plots.resize(el); }catch(_){} return; }
