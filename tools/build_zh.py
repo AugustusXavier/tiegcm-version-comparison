@@ -10,8 +10,7 @@ manual={
  "'At least one member has no value here'":"'至少一个成员在这里没有值'", "'No global-mean series for '":"'没有全球平均序列：'",
  ">hmF2 and NmF2 are the height and the electron density of the largest Ne in each model column, over the whole column, on the model’s own levels without interpolation, computed member by member. Where the F layer is weak the largest Ne can sit in the lower ionosphere, so hmF2 can jump by a few hundred km. The hmF2 difference is in km; the NmF2 difference is in % of the reference. They have no height, so the height buttons do not apply.<":">hmF2 和 NmF2 是每个模式格点垂直柱子里 Ne 最大值的高度和大小，在整根柱子、模式自己的层上取，不插值，逐个成员算。F 层弱的地方最大值可能落到低层电离层，hmF2 会跳几百公里。hmF2 的差单位是 km，NmF2 的差是参考配置的百分比。它们没有高度维，高度按钮对它们不起作用。<",
  ">hmF2 and NmF2 have one value per column, so there is nothing to stack by height here. Choose temperature, density or electron density for this view.<":">hmF2 和 NmF2 每根柱子只有一个值，这里没有可以按高度叠的东西。看这个视图请选温度、密度或电子密度。<",
- ">Scope.<":">范围。<",
- "</b> The maps and curves in the first five sections show differences between configurations only; they do not show which configuration is closer to the observations. Comparisons with observations are in the GRACE-FO section and in the two sections at the end.<":"</b>前五节的地图和曲线只显示配置之间的差，不表示哪个配置更接近观测。和观测的比较在 GRACE-FO 一节和最后两节。<",
+
   ">Height–time<":">高度–时间<", ">Groups<":">分组对比<", ">3D layers<":">3D 叠层<", ">GRACE-FO orbit means<":">GRACE-FO 轨道平均<", ">Experiments<":">实验<", ">COSMIC-2<":">COSMIC-2<",
  'aria-label="Sections"':'aria-label="章节"', 'aria-label="Enlarged figure"':'aria-label="放大的图"', 'aria-label="Experiment"':'aria-label="实验"',
  ">Experiments: fixed figures against observations<":">实验：对观测的固定图<",
