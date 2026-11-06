@@ -83,6 +83,23 @@
     "profile_spaghetti"
    ],
    "updated": "2026-11-06T08:34:13Z"
+  },
+  {
+   "id": "ctrl95_m90_a",
+   "mode": "control",
+   "model": "2.0",
+   "settings": "default",
+   "members": 90,
+   "start": "2022-07-05T00",
+   "cycles": 48,
+   "control": null,
+   "dart": "v10.3.0",
+   "figures": [
+    "diag_bias_alt",
+    "diag_overview",
+    "profile_spaghetti"
+   ],
+   "updated": "2026-11-06T08:34:16Z"
   }
  ]
 }
