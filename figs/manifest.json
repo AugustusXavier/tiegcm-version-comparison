@@ -260,11 +260,14 @@
    "control": null,
    "dart": "v11.25.3",
    "figures": [
+    "grace_validate_ratio_metrics",
     "diag_bias_alt",
     "diag_overview",
-    "profile_spaghetti"
+    "profile_spaghetti",
+    "cosmic_bias_latlt",
+    "hmf2_cosmic"
    ],
-   "updated": "2026-11-06T08:34:35Z"
+   "updated": "2026-11-06T09:38:15Z"
   },
   {
    "id": "exp6",
