@@ -41,6 +41,27 @@
     "profile_spaghetti"
    ],
    "updated": "2026-11-06T08:34:08Z"
+  },
+  {
+   "id": "exp9_a",
+   "mode": "assim",
+   "model": "2.0",
+   "settings": "default",
+   "members": 90,
+   "start": "2022-07-05T00",
+   "cycles": 48,
+   "control": "ctrl95_m90_a",
+   "dart": "v10.3.0",
+   "figures": [
+    "grace_validate_denPrior_timeseries",
+    "grace_validate_denPrior_dawndusk",
+    "diag_compare",
+    "diag_bias_alt",
+    "diag_overview",
+    "spread_check_timeseries",
+    "profile_spaghetti"
+   ],
+   "updated": "2026-11-06T08:34:11Z"
   }
  ]
 }
