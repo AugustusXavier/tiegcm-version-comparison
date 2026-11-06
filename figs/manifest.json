@@ -104,11 +104,14 @@
    "control": null,
    "dart": "v10.3.0",
    "figures": [
+    "grace_validate_ratio_metrics",
     "diag_bias_alt",
     "diag_overview",
-    "profile_spaghetti"
+    "profile_spaghetti",
+    "cosmic_bias_latlt",
+    "hmf2_cosmic"
    ],
-   "updated": "2026-11-06T08:34:16Z"
+   "updated": "2026-11-06T09:37:32Z"
   },
   {
    "id": "ctrl95_m90_b",
