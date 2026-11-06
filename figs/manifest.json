@@ -1,0 +1,25 @@
+{
+ "runs": [
+  {
+   "id": "v3exp1_duff",
+   "mode": "assim",
+   "model": "3.0.1",
+   "settings": "DUFF",
+   "members": 10,
+   "start": "2022-07-05T00",
+   "cycles": 95,
+   "control": "v3ctrl_duff",
+   "dart": "v11.25.3",
+   "figures": [
+    "grace_validate_denPrior_timeseries",
+    "grace_validate_denPrior_dawndusk",
+    "diag_compare",
+    "diag_bias_alt",
+    "diag_overview",
+    "spread_check_timeseries",
+    "profile_spaghetti"
+   ],
+   "updated": "2026-11-06T08:33:23Z"
+  }
+ ]
+}
