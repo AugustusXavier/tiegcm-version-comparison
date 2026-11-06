@@ -249,13 +249,16 @@
    "figures": [
     "grace_validate_denPrior_timeseries",
     "grace_validate_denPrior_dawndusk",
+    "grace_validate_ratio_metrics",
     "diag_compare",
     "diag_bias_alt",
     "diag_overview",
     "spread_check_timeseries",
-    "profile_spaghetti"
+    "profile_spaghetti",
+    "cosmic_bias_latlt",
+    "hmf2_cosmic"
    ],
-   "updated": "2026-11-06T09:13:02Z"
+   "updated": "2026-11-06T09:37:08Z"
   }
  ]
 }
