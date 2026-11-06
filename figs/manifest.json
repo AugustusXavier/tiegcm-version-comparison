@@ -218,6 +218,23 @@
     "profile_spaghetti"
    ],
    "updated": "2026-11-06T08:34:33Z"
+  },
+  {
+   "id": "v3ctrl_duff",
+   "mode": "control",
+   "model": "3.0.1",
+   "settings": "DUFF",
+   "members": 10,
+   "start": "2022-07-05T00",
+   "cycles": 95,
+   "control": null,
+   "dart": "v11.25.3",
+   "figures": [
+    "diag_bias_alt",
+    "diag_overview",
+    "profile_spaghetti"
+   ],
+   "updated": "2026-11-06T08:34:35Z"
   }
  ]
 }
