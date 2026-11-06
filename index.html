@@ -190,7 +190,7 @@ canvas{ display:block; max-width:100%; }
       <label class="tog"><input type="checkbox" id="optHatch" checked> Hatch where values are missing</label>
     </div>
   </div>
-  <p id="field2dNote" hidden style="margin:12px 0 0;font-size:13.5px;line-height:1.45">hmF2 and NmF2 are the height and the electron density of the largest Ne in each model column, over the whole column, on the model’s own levels without interpolation, computed member by member. Where the F layer is weak the largest Ne can sit in the lower ionosphere, so hmF2 can jump by a few hundred km. The hmF2 difference is in km; the NmF2 difference is in % of the reference. They have no height, so the height buttons do not apply.</p>
+  <p id="field2dNote" hidden style="margin:12px 0 0;font-size:13.5px;line-height:1.45">hmF2 and NmF2 are the height and the electron density of the largest Ne in each model column, searched only over the levels at or above 200 km (so a strong E or F1 layer cannot be picked up as the peak), on the model’s own levels without interpolation, computed member by member. The hmF2 difference is in km; the NmF2 difference is in % of the reference. They have no height, so the height buttons do not apply.</p>
 
   <section class="view" id="vA" data-view="A">
     <div class="vhead">
@@ -280,7 +280,7 @@ canvas{ display:block; max-width:100%; }
   <section class="view" id="vG" data-view="G">
     <div class="vhead">
       <h2>Experiments: fixed figures against observations</h2>
-      <p>Every assimilation experiment produces the same seven figures when it finishes; control runs produce three. They compare the 1-hour forecast (and, for assimilation runs, the analysis) with the COSMIC-2 electron density and with the GRACE-FO density. The figures are made on the computing system from the run's own output and copied here unchanged. Click a figure to enlarge it.</p>
+      <p>Every experiment produces the same set of figures when it finishes: ten for an assimilation run, six for a control run. They compare the 1-hour forecast (and, for assimilation runs, the analysis) with the COSMIC-2 electron density and with the GRACE-FO density. The figures are made on the computing system from the run's own output and copied here unchanged. Click a figure to enlarge it.</p>
     </div>
     <div class="vctl row"><span class="lbl">Experiment</span><select class="sel" id="expSel" aria-label="Experiment"></select><span class="expmeta" id="expMeta"></span></div>
     <div class="figgrid" id="expFigs"></div>
@@ -304,15 +304,16 @@ var D2R=Math.PI/180, TAU=Math.PI*2;
 function $(id){ return document.getElementById(id); }
 
 /* ---------------- labels ---------------- */
-var PAIR_ORDER=['B-Ap','C-B','D-C','D-Ap','D-E','D-F','F-E','I1-Ap','I2-Ap','I3-Ap','G1-D','G2-D','G3-D','H-Ap','N-D','N1-D','N-N1','N1-Ap'];
+var PAIR_ORDER=['B-Ap','C-B','D-C','D-Ap','D-E','D-F','F-E','I1-Ap','I2-Ap','I3-Ap','G1-D','G2-D','G3-D','H-Ap','N-D','N1-D','N-N1','N1-Ap','exp6-ctrl95','v3exp1-v3ctrl','v3exp1_duff-v3ctrl_duff'];
 var CFG={A:'2.0 (Nick’s executable)',Ap:'2.0 rebuilt',B:'2.9',C:'3.0.1, electron heating option 4',D:'3.0.1',E:'3.0',F:'3.0.1, ENFORCE_N2 on',
   G1:'3.0.1, cp by mass mixing ratio',G2:'3.0.1, O 63 µm cooling coefficient ×2',G3:'3.0.1, qrj 5% term removed',H:'2.0, helium in mean molecular mass',
-  I1:'2.0 + Joule heating w fix',I2:'2.0 + elam3d fix',I3:'2.0 + filter fix',N:'3.0.1 + NCAR settings',N1:'3.0.1 + DUFF'};
+  I1:'2.0 + Joule heating w fix',I2:'2.0 + elam3d fix',I3:'2.0 + filter fix',N:'3.0.1 + NCAR settings',N1:'3.0.1 + DUFF',exp6:'2.0, assimilation (exp6)',ctrl95:'2.0, control (ctrl95)',v3exp1:'3.0.1 default, assimilation',v3ctrl:'3.0.1 default, control',v3exp1_duff:'3.0.1 + DUFF, assimilation',v3ctrl_duff:'3.0.1 + DUFF, control'};
 var PAIR_SUB={'B-Ap':'2.9 − 2.0','C-B':'3.0.1 (heating 4) − 2.9','D-C':'heating option 6 − 4','D-Ap':'3.0.1 − 2.0',
   'D-E':'3.0.1 − 3.0','D-F':'3.0.1, ENFORCE_N2 off − on','F-E':'3.0.1 with ENFORCE_N2 on − 3.0',
   'I1-Ap':'2.0 + Joule heating w fix','I2-Ap':'2.0 + elam3d fix','I3-Ap':'2.0 + filter fix',
   'G1-D':'cp by mass mixing ratio','G2-D':'O 63 µm coefficient ×2','G3-D':'qrj 5% term removed','H-Ap':'2.0, helium in mean molecular mass',
-  'N-D':'full NCAR settings − 3.0.1','N1-D':'DUFF on − off','N-N1':'full NCAR settings − DUFF only','N1-Ap':'3.0.1 + DUFF − 2.0'};
+  'N-D':'full NCAR settings − 3.0.1','N1-D':'DUFF on − off','N-N1':'full NCAR settings − DUFF only','N1-Ap':'3.0.1 + DUFF − 2.0',
+  'exp6-ctrl95':'2.0: assimilation − control','v3exp1-v3ctrl':'3.0.1: assimilation − control','v3exp1_duff-v3ctrl_duff':'3.0.1 + DUFF: assimilation − control'};
 var GROUPS=[
   {id:'decomp',name:'Total and its parts',pairs:['B-Ap','C-B','D-C','D-Ap'],eq:'B−A′ + C−B + D−C = D−A′',
    note:'The first three add up to the last. Temperature (K) adds exactly; density and electron density are percentages of each reference, so the parts add up to the total only approximately.'},
@@ -323,7 +324,9 @@ var GROUPS=[
   {id:'issues',name:'Code issues',pairs:['G1-D','G2-D','G3-D','H-Ap'],eq:'',
    note:'G1, G2, G3 each change one thing in 3.0.1; H changes one thing in 2.0.'},
   {id:'ncar',name:'NCAR settings',pairs:['N-D','N1-D','N-N1','N1-Ap'],eq:'N−D = (N−N1) + (N1−D)',
-   note:'N is 3.0.1 with the full NCAR recommended settings; N1 is 3.0.1 with only DUFF turned on. Temperature and hmF2 add exactly; percentages only approximately.'}];
+   note:'N is 3.0.1 with the full NCAR recommended settings; N1 is 3.0.1 with only DUFF turned on. Temperature and hmF2 add exactly; percentages only approximately.'},
+  {id:'assim',name:'Assimilation − control',pairs:['exp6-ctrl95','v3exp1-v3ctrl','v3exp1_duff-v3ctrl_duff'],eq:'',
+   note:'Each pair is an assimilation run minus its own control: the 1-hour forecast of each cycle, member i minus member i, then the 10-member mean. 7/5 00, 7/8 23 and 7/9 00 UT are not available for these pairs.'}];
 var MAPF_CN={TN:'temperature',DEN:'density',NE:'electron density',hmF2:'hmF2',NmF2:'NmF2'};
 var FIELD_CN={TN:'TN neutral temperature',DEN:'DEN neutral mass density',NE:'NE electron density',UN:'UN zonal wind (eastward positive)',VN:'VN meridional wind (northward positive)',
   O2:'O2',O1:'O1',N2:'N2',OP:'OP (O⁺)',HE:'HE',NO:'NO',NO_COOL:'NO_COOL',O_N2:'O_N2',hmF2:'hmF2 F-layer peak height',NmF2:'NmF2 F-layer peak electron density'};
@@ -838,7 +841,7 @@ if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function()
 /* ---------------- start ---------------- */
 function setupUI(){
   var sel=$('pairSel');
-  [['Total and its parts',['B-Ap','C-B','D-C','D-Ap']],['After 3.0',['D-E','D-F','F-E']],['Fixes on 2.0, one at a time',['I1-Ap','I2-Ap','I3-Ap']],['Code issues',['G1-D','G2-D','G3-D','H-Ap']],['NCAR settings',['N-D','N1-D','N-N1','N1-Ap']]].forEach(function(g){
+  [['Total and its parts',['B-Ap','C-B','D-C','D-Ap']],['After 3.0',['D-E','D-F','F-E']],['Fixes on 2.0, one at a time',['I1-Ap','I2-Ap','I3-Ap']],['Code issues',['G1-D','G2-D','G3-D','H-Ap']],['NCAR settings',['N-D','N1-D','N-N1','N1-Ap']],['Assimilation − control',['exp6-ctrl95','v3exp1-v3ctrl','v3exp1_duff-v3ctrl_duff']]].forEach(function(g){
     var og=document.createElement('optgroup'); og.label=g[0];
     g[1].forEach(function(pid){ var o=document.createElement('option'); o.value=pid; var has=HAS_MAPS.indexOf(pid)>=0;
       o.textContent=pairLabel(pid)+'   '+(PAIR_SUB[pid]||'')+(has?'':' (not exported)'); o.disabled=!has; og.appendChild(o); });
@@ -964,6 +967,9 @@ D.subscribe(update);
 var ZH=document.documentElement.lang==='zh', BASE=ZH?'../':'';
 function L(en,zh){ return ZH?zh:en; }
 var FIG={
+  grace_validate_ratio_metrics:{t:L('GRACE-FO density: ratio metrics','GRACE-FO 密度：比值指标'),c:L('Observed/model density ratio in the style of Bruinsma et al. (2021): mean of the ratio (exponential of the mean of ln), its standard deviation in percent, and Pearson R, for the whole window and each phase, control and assimilation forecast; the last rows after de-biasing with the quiet days.','按 Bruinsma 等（2021）的做法算的观测/模式密度比值：比值的平均（取对数平均再取指数）、它的标准差（百分数）和 Pearson 相关系数，全窗和各阶段，对照和同化预报；最后几行是用平静段去偏后的数。')},
+  cosmic_bias_latlt:{t:L('Where the Ne bias is: latitude and local time','Ne 偏差在哪里：纬度和地方时'),c:L('(model − obs)/obs in percent over the whole window, by latitude and local time, in three height bands, using every observation that has a forecast value (DART QC 0, 1, 2, 7). Right: GRACE-FO (ESA 0003) by latitude. Top row control, bottom row assimilation forecast.','全窗的（模式 − 观测）/观测，百分数，按纬度和地方时分格，三个高度带，用所有有预报值的观测（DART QC 0、1、2、7）。右侧是 GRACE-FO（ESA 0003）按纬度分。上排对照，下排同化预报。')},
+  hmf2_cosmic:{t:L('hmF2 against COSMIC-2','hmF2 对 COSMIC-2'),c:L('Top: mean hmF2 per cycle in the northern and southern hemispheres: COSMIC-2, control and assimilation forecasts. Bottom: whole-window mean of model − observed hmF2 by latitude and local time of the peak; cells with fewer than 30 profiles are blank.','上：南北半球每个循环的平均 hmF2，COSMIC-2、对照和同化预报。下：全窗的模式减观测 hmF2，按纬度和峰所在的地方时分格，不足 30 条剖面的格子留空。')},
   diag_overview:{t:L('Assimilation overview','同化总览'),c:L('Top left: forecast and analysis RMSE against the ensemble spread, per cycle. Top right: rank histogram, where each observation falls among the 10 members, all cycles. Bottom left: DART quality-control counts per cycle. Bottom right: observation minus forecast mean at the last cycle.','左上：每个循环的预报和分析 RMSE 对集合 spread。右上：秩直方图，每条观测落在 10 个成员中的第几位，全部循环。左下：每个循环 DART 质量控制的计数。右下：最后一个循环的观测减预报平均。')},
   diag_bias_alt:{t:L('Ne: bias and RMSE by height','Ne：偏差和分高度 RMSE'),c:L('Top: observation minus model electron density per cycle, forecast and analysis; positive means the model is below the observations. Bottom: forecast RMSE in three height bands.','上：每个循环的观测减模式电子密度，预报和分析；正值表示模式低于观测。下：三个高度带的预报 RMSE。')},
   diag_compare:{t:L('Ne: against the control','Ne：对对照运行'),c:L('Top: forecast electron density RMSE per cycle for the control, the forecast and the analysis, on the observations accepted by both runs. Bottom: improvement over the control in percent.','上：对照、预报、分析三者每个循环的电子密度 RMSE，用两个运行都接收的观测。下：相对对照的改善百分比。')},
@@ -976,21 +982,15 @@ var ASSIM=['grace_validate_denPrior_timeseries','grace_validate_denPrior_dawndus
 var CTRL=['diag_bias_alt','diag_overview','profile_spaghetti'];
 var A=L('assimilation','同化'), C=L('control','对照'), M=L('members','成员'), CY=L('cycles','循环'), ST=L('start','起点'), CT=L('control run','对照运行');
 function meta(kind,mem,start,n,ctrl,extra){ var p=[(kind==='assim'?A:C)+', '+mem+' '+M, ST+' '+start+' UT, '+n+' '+CY]; if(ctrl) p.push(CT+' '+ctrl); if(extra) p.push(extra); return p.join(' · '); }
-var EXPS=[
-  {id:'exp6',label:L('2.0, 10 members, full window','2.0，10 成员，全窗'),meta:meta('assim',10,'7/5 00',95,'ctrl95',L('DART v10.3.0','DART v10.3.0')),figs:ASSIM},
-  {id:'exp8',label:L('2.0, 10 members, from storm onset','2.0，10 成员，从磁暴开始'),meta:meta('assim',10,'7/7 00',47,'ctrl95'),figs:ASSIM},
-  {id:'exp9_a',label:L('2.0, 90 members, quiet days','2.0，90 成员，平静段'),meta:meta('assim',90,'7/5 00',48,'ctrl95_m90_a'),figs:ASSIM},
-  {id:'exp9_b',label:L('2.0, 90 members, storm days','2.0，90 成员，磁暴段'),meta:meta('assim',90,'7/7 00',47,'ctrl95_m90_b'),figs:ASSIM},
-  {id:'ctrl95_m90_a',label:L('2.0, 90 members, control, quiet days','2.0，90 成员，对照，平静段'),meta:meta('control',90,'7/5 00',48),figs:CTRL},
-  {id:'ctrl95_m90_b',label:L('2.0, 90 members, control, storm days','2.0，90 成员，对照，磁暴段'),meta:meta('control',90,'7/7 00',47),figs:CTRL},
-  {id:'v3ctrl',label:L('3.0.1 default, control','3.0.1 默认，对照'),meta:meta('control',10,'7/5 00',95),figs:CTRL},
-  {id:'v3exp1',label:L('3.0.1 default, assimilation','3.0.1 默认，同化'),meta:meta('assim',10,'7/5 00',95,'v3ctrl',L('DART v10.3.0','DART v10.3.0')),figs:ASSIM},
-  {id:'v3exp1_v11',label:L('3.0.1 default, DART v11.25.3, segment 1','3.0.1 默认，DART v11.25.3，第 1 段'),meta:meta('assim',10,'7/5 00',95,'v3ctrl',L('chain stopped early; continued by segments 2 and 3','链中途停止，由第 2、3 段接续')),figs:ASSIM},
-  {id:'v3exp1_v11b',label:L('3.0.1 default, DART v11.25.3, segment 2','3.0.1 默认，DART v11.25.3，第 2 段'),meta:meta('assim',10,'7/7 00',47,'v3ctrl'),figs:ASSIM},
-  {id:'v3exp1_v11c',label:L('3.0.1 default, DART v11.25.3, segment 3','3.0.1 默认，DART v11.25.3，第 3 段'),meta:meta('assim',10,'7/7 12',35,'v3ctrl'),figs:ASSIM},
-  {id:'v3ctrl_duff',label:L('3.0.1 + DUFF, control','3.0.1 + DUFF，对照'),meta:meta('control',10,'7/5 00',95),figs:CTRL},
-  {id:'v3exp1_duff',label:L('3.0.1 + DUFF, assimilation','3.0.1 + DUFF，同化'),meta:meta('assim',10,'7/5 00',95,'v3ctrl_duff',L('DART v11.25.3','DART v11.25.3')),figs:ASSIM}
-];
+var FIGORDER=['grace_validate_denPrior_timeseries','grace_validate_denPrior_dawndusk','grace_validate_ratio_metrics','diag_compare','diag_bias_alt','cosmic_bias_latlt','hmf2_cosmic','diag_overview','spread_check_timeseries','profile_spaghetti'];
+var SETN={default:L('default','默认'),DUFF:'DUFF',NCAR:L('NCAR settings','NCAR 设置')};
+function fmtStart(t){ var m=/^\d{4}-(\d\d)-(\d\d)T(\d\d)/.exec(t||''); return m?(+m[1])+'/'+(+m[2])+' '+m[3]:(t||'?'); }
+function entry(r){ var set=r.settings&&r.settings!=='default'?' + '+(SETN[r.settings]||r.settings):''; var kind=r.mode==='assim'?A:C;
+  var label=(r.model||'?')+set+(r.members===90?L(', 90 members',', 90 成员'):'')+', '+kind;
+  var m=[kind+', '+r.members+' '+M, ST+' '+fmtStart(r.start)+' UT, '+r.cycles+' '+CY]; if(r.control) m.push(CT+' '+r.control); if(r.dart) m.push('DART '+r.dart);
+  var figs=FIGORDER.filter(function(f){ return (r.figures||[]).indexOf(f)>=0; }).concat((r.figures||[]).filter(function(f){ return FIGORDER.indexOf(f)<0; }));
+  return {id:r.id,label:label,meta:m.join(' · '),figs:figs,key:[r.model||'',r.settings==='default'?0:(r.settings==='DUFF'?1:2),r.mode==='assim'?1:0,String(r.members||0).padStart(3,'0'),r.start||'',r.id].join('|')}; }
+var EXPS=[];
 var COSMIC=[
   {f:'cosmic2_Ne_seven_configs.png',t:L('Electron density by height band','分高度带的电子密度'),c:L('Mean Ne at the COSMIC-2 points in each 1-hour cycle, 3-hour running mean: observations and the seven configurations (10-member mean, 1-hour forecast). Whole-window bias and RMSE beside each panel.','每个 1 小时循环内 COSMIC-2 观测点上的平均 Ne，3 小时滑动平均：观测和七个配置（10 成员平均，一小时预报）。每格右侧是全窗的偏差和 RMSE。')},
   {f:'cosmic2_hmF2_seven_configs.png',t:L('F-layer peak height: time series','F 层峰高：时间序列'),c:L('Mean hmF2 of the profiles in each cycle, south and north of the equator, 3-hour running mean. Whole-window mean of model minus observation beside each panel.','每个循环内剖面的平均 hmF2，赤道以南和以北，3 小时滑动平均。每格右侧是全窗的模式减观测的平均。')},
@@ -999,10 +999,16 @@ var COSMIC=[
 var sel=document.getElementById('expSel'), metaEl=document.getElementById('expMeta'), grid=document.getElementById('expFigs'), cg=document.getElementById('cosmicFigs');
 var lb=document.getElementById('lightbox'), lbi=document.getElementById('lightboxImg');
 function card(src,t,c,wide){ var d=document.createElement('div'); d.className='figcard'+(wide?' wide':''); var im=document.createElement('img'); im.loading='lazy'; im.src=src; im.alt=t; im.addEventListener('click',function(){ lbi.src=src; lbi.alt=t; lb.classList.add('on'); }); var h=document.createElement('h3'); h.textContent=t; var p=document.createElement('p'); p.textContent=c; d.appendChild(im); d.appendChild(h); d.appendChild(p); return d; }
-function show(id){ var e=EXPS.filter(function(x){return x.id===id;})[0]; if(!e) return; metaEl.textContent=e.meta; grid.innerHTML=''; e.figs.forEach(function(f){ grid.appendChild(card(BASE+'figs/runs/'+e.id+'/'+f+'.png',FIG[f].t,FIG[f].c,f==='grace_validate_denPrior_dawndusk')); }); try{ localStorage.setItem('tiegcm-exp',id); }catch(_){} }
-EXPS.forEach(function(e){ var o=document.createElement('option'); o.value=e.id; o.textContent=e.label+' — '+e.id; sel.appendChild(o); });
-var start='v3exp1_duff'; try{ var r=localStorage.getItem('tiegcm-exp'); if(r && EXPS.some(function(x){return x.id===r;})) start=r; }catch(_){}
-sel.value=start; show(start); sel.addEventListener('change',function(){ show(sel.value); });
+function show(id){ var e=EXPS.filter(function(x){return x.id===id;})[0]; if(!e) return; metaEl.textContent=e.meta; grid.innerHTML=''; e.figs.forEach(function(f){ grid.appendChild(card(BASE+'figs/runs/'+e.id+'/'+f+'.png',figOf(f).t,figOf(f).c,f==='grace_validate_denPrior_dawndusk'||f==='grace_validate_ratio_metrics'||f==='cosmic_bias_latlt')); }); try{ localStorage.setItem('tiegcm-exp',id); }catch(_){} }
+function figOf(f){ return FIG[f]||{t:f,c:''}; }
+fetch(BASE+'figs/manifest.json').then(function(r){ if(!r.ok) throw new Error('manifest HTTP '+r.status); return r.json(); }).then(function(man){
+  EXPS=(man.runs||[]).map(entry).sort(function(a,b){ return a.key<b.key?-1:(a.key>b.key?1:0); });
+  EXPS.forEach(function(e){ var o=document.createElement('option'); o.value=e.id; o.textContent=e.label+' — '+e.id; sel.appendChild(o); });
+  var start='v3exp1_duff'; try{ var r=localStorage.getItem('tiegcm-exp'); if(r && EXPS.some(function(x){return x.id===r;})) start=r; }catch(_){}
+  if(!EXPS.some(function(x){return x.id===start;}) && EXPS.length) start=EXPS[EXPS.length-1].id;
+  sel.value=start; show(start); window.TIEGCMFigs.exps=EXPS.map(function(e){return e.id;});
+}).catch(function(e){ metaEl.textContent=L('The experiment list could not be loaded: ','实验清单没有读到：')+e.message; });
+sel.addEventListener('change',function(){ show(sel.value); });
 COSMIC.forEach(function(x){ cg.appendChild(card(BASE+'figs/cosmic/'+x.f,x.t,x.c,true)); });
 lb.addEventListener('click',function(){ lb.classList.remove('on'); lbi.src=''; });
 document.addEventListener('keydown',function(ev){ if(ev.key==='Escape' && lb.classList.contains('on')){ lb.classList.remove('on'); lbi.src=''; } });
