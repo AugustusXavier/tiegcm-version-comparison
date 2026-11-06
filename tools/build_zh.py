@@ -15,6 +15,12 @@ manual={
  'aria-label="Sections"':'aria-label="章节"', 'aria-label="Enlarged figure"':'aria-label="放大的图"', 'aria-label="Experiment"':'aria-label="实验"',
  ">Experiments: fixed figures against observations<":">实验：对观测的固定图<",
  ">Every experiment produces the same set of figures when it finishes: ten for an assimilation run, six for a control run. They compare the 1-hour forecast (and, for assimilation runs, the analysis) with the COSMIC-2 electron density and with the GRACE-FO density. The figures are made on the computing system from the run's own output and copied here unchanged. Click a figure to enlarge it.<":">每个实验跑完都自动出同一套图：同化运行 10 张，对照运行 6 张。它们把一小时预报（同化运行还有分析场）和 COSMIC-2 电子密度、GRACE-FO 密度比较。图在计算机上由该运行自己的输出画出，原样放在这里。点图可以放大。<",
+ ">One-hue scale: the field itself, when one configuration is shown instead of the difference<":">单色渐变：只显示一个配置时画的是场本身，不是差<",
+ '<span class="lbl">Show</span>':'<span class="lbl">显示</span>',
+ 'aria-label="Show the difference or one configuration"':'aria-label="显示差还是某一个配置"',
+ "'Not available at this time'":"'这个时刻没有'", "'No colour range for this field'":"'这个量没有色标范围'",
+ "'Global mean'+(ownUnit(fld)":"'全球平均'+(ownUnit(fld)",
+ "'The field itself (one configuration shown instead of the difference): the 10-member mean at the fixed heights, encoded in 254 steps between the 0.1 and 99.9 percentiles of all times of that configuration (values outside are marked ≤ or ≥ in the tooltip); DEN in kg m⁻³, NE and NmF2 in cm⁻³. The colour range is the encoding range of X and Y together, so that switching between them compares like with like. Height–time: area-weighted global mean, member minimum and maximum of the member-mean field, with the same coverage rule as for the differences.'":"'场本身（只显示一个配置时）：固定高度上的 10 成员平均，在该配置全部时刻的 0.1 和 99.9 百分位之间编成 254 级（范围之外的值在悬停提示里标 ≤ 或 ≥）；DEN 单位 kg m⁻³，NE 和 NmF2 单位 cm⁻³。色标范围取 X 和 Y 两者编码范围的并集，这样来回切换时比的是同一个尺子。高度–时间：成员平均场的面积加权全球平均、成员最小和最大，覆盖率规则和差一样。'",
  ">Experiment<":">实验<",
  ">Model-only configurations against COSMIC-2<":">只跑模式的配置对 COSMIC-2<",
  ">Seven configurations of the version comparison, run without assimilation, compared with the COSMIC-2 electron density profiles of the same four days: electron density by height band, and the F-layer peak height hmF2 (height of the largest Ne on each profile between 160 and 500 km, found the same way for observation and model). All configurations use the same 490,076 observations: levels not flagged bad in the ionPrf files and with a model value in every run; no DART outlier rejection. Drawn from the tables of the 11/3 computation.<":">版本对照里的七个配置，不做同化，和同样四天的 COSMIC-2 电子密度剖面比较：分高度带的电子密度，以及 F 层峰高 hmF2（每条剖面在 160–500 km 之间 Ne 最大处的高度，观测和模式用同样的取法）。所有配置用同一批 490,076 条观测：ionPrf 文件里没有标坏、而且每个运行都有模式值的层；不做 DART 的离群剔除。由 11/3 那次计算的表画出。<",
@@ -23,6 +29,14 @@ manual={
  "'All '+nAll+' comparisons have maps'":"nAll+' 组比较都有地图'",
  "<html lang=\"en\">":"<html lang=\"zh\">", "' One color scale for the whole group'":"' 同一组用同一个色标'", ">量<":">物理量<",
 }
+# paragraphs extended on 2026-11-07 (the aligned table holds the original paragraphs; the extended ones are built from them here)
+def _ext(prefix,en_old,en_new,zh_add):
+    old=[k for k in m if k.startswith(prefix)]; assert len(old)==1,prefix; old=old[0]
+    manual[old.replace(en_old,en_new)]=m[old][:-1]+zh_add+'<'
+_ext('>Hourly differences between two configurations:', 'quantity and height.<', 'quantity and height. The buttons after the height choose what is drawn: the difference, or the field of one of the two configurations itself.<', '高度后面的几个按钮选画什么：画差，还是画两个配置中某一个的场本身。')
+_ext('>Horizontal axis: local time; vertical axis: latitude;', 'the 10-member mean difference. Hover over', 'the 10-member mean difference, or the 10-member mean of the field itself when one configuration is shown. Hover over', '只显示一个配置时，颜色是该配置场本身的 10 成员平均。')
+_ext('>Left: global-mean difference against height and time;', 'the quantity is chosen here.<', 'the quantity is chosen here. When one configuration is shown, the plots give its global mean itself (logarithmic colours and axis for densities and mixing ratios).<', '只显示一个配置时，这里画的是它自己的全球平均（密度和混合比用对数颜色和对数坐标）。')
+_ext('>Related comparisons side by side at the same time and height.', 'vertical line: current time.<', 'vertical line: current time. This section always shows differences, whichever Show button is pressed.<', '这一节永远画差，不受“显示”按钮影响。')
 n_auto=0
 for k in sorted(m,key=len,reverse=True):
     if k in s: s=s.replace(k,m[k]); n_auto+=1
